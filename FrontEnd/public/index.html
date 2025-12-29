@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React Admin Dashboard - Gestion Complète</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .sidebar-gradient {
+            background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+        }
+        .card-hover {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(236, 72, 153, 0.15);
+        }
+        .btn-pink {
+            background: linear-gradient(135deg, #ec4899, #be185d);
+        }
+        .btn-pink:hover {
+            background: linear-gradient(135deg, #be185d, #9d174d);
+        }
+        .modal-overlay {
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .logo-style {
+            filter: brightness(0) invert(1);
+        }
+        .chart-container {
+            height: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // Composant principal App
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('articles');
+            const [sidebarOpen, setSidebarOpen] = useState(false);
+            const [articles, setArticles] = useState([
+                {
+                    id: 1,
+                    title: "Tendances Mode Printemps 2024",
+                    category: "Mode",
+                    author: "Sophie Martin",
+                    date: "2024-01-15",
+                    status: "Publié",
+                    views: 1250,
+                    image: "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=300",
+                    description: "Découvrez les dernières tendances mode pour le printemps 2024..."
+                },
+                {
+                    id: 2,
+                    title: "Routine Beauté Naturelle",
+                    category: "Beauté",
+                    author: "Emma Dubois",
+                    date: "2024-01-10",
+                    status: "Brouillon",
+                    views: 890,
+                    image: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=300",
+                    description: "Une routine beauté 100% naturelle pour une peau éclatante..."
+                },
+                {
+                    id: 3,
+                    title: "Lifestyle Minimaliste",
+                    category: "Lifestyle",
+                    author: "Claire Rousseau",
+                    date: "2024-01-08",
+                    status: "Publié",
+                    views: 2100,
+                    image: "https://images.unsplash.com/photo-1493063341945-5ce7a0cde458?w=300",
+                    description: "Adopter un mode de vie minimaliste pour plus de sérénité..."
+                }
+            ]);
+
+            const [showModal, setShowModal] = useState(false);
+            const [editingArticle, setEditingArticle] = useState(null);
+            const [searchTerm, setSearchTerm] = useState('');
+            const [filterCategory, setFilterCategory] = useState('Tous');
+
+            // Navigation items
+            const navItems = [
+                { id: 'articles', icon: 'fas fa-newspaper', label: 'Articles', active: true },
+                { id: 'commandes', icon: 'fas fa-shopping-cart', label: 'Commandes' },
+                { id: 'statistiques', icon: 'fas fa-chart-bar', label: 'Statistiques' },
+                { id: 'clients', icon: 'fas fa-users', label: 'Clients' },
+                { id: 'messages', icon: 'fas fa-envelope', label: 'Messages' },
+                { id: 'logout', icon: 'fas fa-sign-out-alt', label: 'Déconnexion' }
+            ];
+
+            const categories = ['Tous', 'Mode', 'Beauté', 'Lifestyle', 'Tech'];
+
+            // Filtrer les articles
+            const filteredArticles = articles.filter(article => {
+                const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                    article.author.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesCategory = filterCategory === 'Tous' || article.category === filterCategory;
+                return matchesSearch && matchesCategory;
+            });
+
+            // Fonction pour ajouter/modifier un article
+            const handleSaveArticle = (articleData) => {
+                if (editingArticle) {
+                    setArticles(articles.map(a => a.id === editingArticle.id ? 
+                        { ...articleData, id: editingArticle.id } : a
+                    ));
+                } else {
+                    const newArticle = {
+                        ...articleData,
+                        id: Date.now(),
+                        views: 0,
+                        date: new Date().toISOString().split('T')[0]
+                    };
+                    setArticles([...articles, newArticle]);
+                }
+                setShowModal(false);
+                setEditingArticle(null);
+            };
+
+            // Fonction pour supprimer un article
+            const handleDeleteArticle = (id) => {
+                if (confirm('Êtes-vous sûr de vouloir supprimer cet article ?')) {
+                    setArticles(articles.filter(a => a.id !== id));
+                }
+            };
+
+            return (
+                <div className="flex h-screen bg-gray-50">
+                    {/* Sidebar */}
+                    <Sidebar 
+                        navItems={navItems} 
+                        activeTab={activeTab} 
+                        setActiveTab={setActiveTab}
+                        sidebarOpen={sidebarOpen}
+                        setSidebarOpen={setSidebarOpen}
+                    />
+
+                    {/* Main Content */}
+                    <div className="flex-1 flex flex-col overflow-hidden">
+                        {/* Header */}
+                        <Header setSidebarOpen={setSidebarOpen} />
+
+                        {/* Content */}
+                        <main className="flex-1 overflow-y-auto">
+                            {activeTab === 'articles' && (
+                                <ArticlesPage 
+                                    articles={filteredArticles}
+                                    searchTerm={searchTerm}
+                                    setSearchTerm={setSearchTerm}
+                                    filterCategory={filterCategory}
+                                    setFilterCategory={setFilterCategory}
+                                    categories={categories}
+                                    setShowModal={setShowModal}
+                                    setEditingArticle={setEditingArticle}
+                                    handleDeleteArticle={handleDeleteArticle}
+                                />
+                            )}
+                            {activeTab === 'commandes' && <CommandesPage />}
+                            {activeTab === 'statistiques' && <StatistiquesPage />}
+                            {activeTab === 'clients' && <ClientsPage />}
+                            {activeTab === 'messages' && <MessagesPage />}
+                        </main>
+                    </div>
+
+                    {/* Modal */}
+                    {showModal && (
+                        <ArticleModal 
+                            article={editingArticle}
+                            onSave={handleSaveArticle}
+                            onClose={() => {
+                                setShowModal(false);
+                                setEditingArticle(null);
+                            }}
+                        />
+                    )}
+                </div>
+            );
+        };
+
+        // Composant Sidebar
+        const Sidebar = ({ navItems, activeTab, setActiveTab, sidebarOpen, setSidebarOpen }) => {
+            return (
+                <>
+                    {/* Mobile overlay */}
+                    {sidebarOpen && (
+                        <div 
+                            className="fixed inset-0 z-20 bg-black opacity-50 lg:hidden"
+                            onClick={() => setSidebarOpen(false)}
+                        />
+                    )}
+
+                    {/* Sidebar */}
+                    <div className={`fixed lg:static inset-y-0 left-0 z-30 w-64 sidebar-gradient transform ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300 ease-in-out`}>
+                        <div className="flex flex-col h-full">
+                            {/* Logo */}
+                            <div className="flex items-center justify-center py-6 px-4">
+                                <div className="text-white text-2xl font-bold">
+                                    <div className="bg-white bg-opacity-20 rounded-lg p-3">
+                                        <i className="fas fa-crown text-white"></i>
+                                        <span className="ml-2">Musa Store</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Navigation */}
+                            <nav className="flex-1 px-4 space-y-2">
+                                {navItems.map((item) => (
+                                    <button
+                                        key={item.id}
+                                        onClick={() => {
+                                            setActiveTab(item.id);
+                                            setSidebarOpen(false);
+                                        }}
+                                        className={`w-full flex items-center px-4 py-3 text-left text-white rounded-lg transition-colors duration-200 ${
+                                            activeTab === item.id 
+                                                ? 'bg-white bg-opacity-20 shadow-lg' 
+                                                : 'hover:bg-white hover:bg-opacity-10'
+                                        }`}
+                                    >
+                                        <i className={`${item.icon} mr-3 text-lg`}></i>
+                                        <span className="font-medium">{item.label}</span>
+                                    </button>
+                                ))}
+                            </nav>
+
+                            {/* Footer */}
+                            <div className="p-4 text-center text-white text-sm opacity-75">
+                                © 2024 Musa Store Admin
+                            </div>
+                        </div>
+                    </div>
+                </>
+            );
+        };
+
+        // Composant Header
+        const Header = ({ setSidebarOpen }) => {
+            return (
+                <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                            <button 
+                                onClick={() => setSidebarOpen(true)}
+                                className="lg:hidden mr-4 text-gray-600 hover:text-pink-500"
+                            >
+                                <i className="fas fa-bars text-xl"></i>
+                            </button>
+                            <h1 className="text-2xl font-bold text-gray-800">Dashboard Admin</h1>
+                        </div>
+
+                        <div className="flex items-center space-x-4">
+                            <button className="relative text-gray-600 hover:text-pink-500">
+                                <i className="fas fa-bell text-xl"></i>
+                                <span className="absolute -top-1 -right-1 bg-pink-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">3</span>
+                            </button>
+                            <div className="flex items-center space-x-2">
+                                <img 
+                                    src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face" 
+                                    alt="Profile" 
+                                    className="w-8 h-8 rounded-full"
+                                />
+                                <span className="text-gray-700 font-medium">Admin</span>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+            );
+        };
+
+        // Composant Articles Page
+        const ArticlesPage = ({ articles, searchTerm, setSearchTerm, filterCategory, setFilterCategory, categories, setShowModal, setEditingArticle, handleDeleteArticle }) => {
+            return (
+                <div className="p-6">
+                    {/* Header avec boutons */}
+                    <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 space-y-4 lg:space-y-0">
+                        <div>
+                            <h2 className="text-3xl font-bold text-gray-800">Gestion des Articles</h2>
+                            <p className="text-gray-600 mt-1">{articles.length} articles au total</p>
+                        </div>
+                        <button 
+                            onClick={() => setShowModal(true)}
+                            className="btn-pink text-white px-6 py-3 rounded-lg font-medium flex items-center space-x-2 hover:shadow-lg transition-all duration-200"
+                        >
+                            <i className="fas fa-plus"></i>
+                            <span>Nouvel Article</span>
+                        </button>
+                    </div>
+
+                    {/* Filters */}
+                    <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                        <div className="flex flex-col lg:flex-row space-y-4 lg:space-y-0 lg:space-x-4">
+                            {/* Search */}
+                            <div className="flex-1">
+                                <div className="relative">
+                                    <i className="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                                    <input 
+                                        type="text"
+                                        placeholder="Rechercher un article..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Category Filter */}
+                            <div className="lg:w-48">
+                                <select 
+                                    value={filterCategory}
+                                    onChange={(e) => setFilterCategory(e.target.value)}
+                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                >
+                                    {categories.map(cat => (
+                                        <option key={cat} value={cat}>{cat}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Articles Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        {articles.map(article => (
+                            <ArticleCard 
+                                key={article.id}
+                                article={article}
+                                onEdit={() => {
+                                    setEditingArticle(article);
+                                    setShowModal(true);
+                                }}
+                                onDelete={() => handleDeleteArticle(article.id)}
+                            />
+                        ))}
+                    </div>
+
+                    {articles.length === 0 && (
+                        <div className="text-center py-12">
+                            <i className="fas fa-newspaper text-6xl text-gray-300 mb-4"></i>
+                            <p className="text-gray-500 text-lg">Aucun article trouvé</p>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        // Composant Article Card
+        const ArticleCard = ({ article, onEdit, onDelete }) => {
+            const statusColors = {
+                'Publié': 'bg-green-100 text-green-800',
+                'Brouillon': 'bg-yellow-100 text-yellow-800',
+                'Archivé': 'bg-gray-100 text-gray-800'
+            };
+
+            return (
+                <div className="bg-white rounded-lg shadow-sm card-hover overflow-hidden">
+                    <div className="relative">
+                        <img 
+                            src={article.image} 
+                            alt={article.title}
+                            className="w-full h-48 object-cover"
+                        />
+                        <span className={`absolute top-3 right-3 px-3 py-1 rounded-full text-sm font-medium ${statusColors[article.status]}`}>
+                            {article.status}
+                        </span>
+                    </div>
+
+                    <div className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                            <span className="bg-pink-100 text-pink-800 text-xs font-medium px-2 py-1 rounded-full">
+                                {article.category}
+                            </span>
+                            <span className="text-gray-500 text-sm">{article.date}</span>
+                        </div>
+
+                        <h3 className="font-bold text-lg text-gray-800 mb-2 line-clamp-2">{article.title}</h3>
+                        <p className="text-gray-600 text-sm mb-4 line-clamp-3">{article.description}</p>
+
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center space-x-2">
+                                <i className="fas fa-user text-gray-400 text-sm"></i>
+                                <span className="text-gray-600 text-sm">{article.author}</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <i className="fas fa-eye text-gray-400 text-sm"></i>
+                                <span className="text-gray-600 text-sm">{article.views}</span>
+                            </div>
+                        </div>
+
+                        <div className="flex space-x-2">
+                            <button 
+                                onClick={onEdit}
+                                className="flex-1 bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center justify-center space-x-1"
+                            >
+                                <i className="fas fa-edit text-sm"></i>
+                                <span>Modifier</span>
+                            </button>
+                            <button 
+                                onClick={onDelete}
+                                className="flex-1 bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition-colors duration-200 flex items-center justify-center space-x-1"
+                            >
+                                <i className="fas fa-trash text-sm"></i>
+                                <span>Supprimer</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Composant Article Modal
+        const ArticleModal = ({ article, onSave, onClose }) => {
+            const [formData, setFormData] = useState({
+                title: article?.title || '',
+                category: article?.category || 'Mode',
+                author: article?.author || '',
+                description: article?.description || '',
+                status: article?.status || 'Brouillon',
+                image: article?.image || ''
+            });
+
+            const handleSubmit = (e) => {
+                e.preventDefault();
+                onSave(formData);
+            };
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center modal-overlay">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+                        <div className="p-6 border-b border-gray-200">
+                            <h3 className="text-2xl font-bold text-gray-800">
+                                {article ? 'Modifier l\'article' : 'Nouvel article'}
+                            </h3>
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="p-6">
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Titre</label>
+                                    <input 
+                                        type="text"
+                                        value={formData.title}
+                                        onChange={(e) => setFormData({...formData, title: e.target.value})}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                        required
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Catégorie</label>
+                                        <select 
+                                            value={formData.category}
+                                            onChange={(e) => setFormData({...formData, category: e.target.value})}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                        >
+                                            <option value="Mode">Mode</option>
+                                            <option value="Beauté">Beauté</option>
+                                            <option value="Lifestyle">Lifestyle</option>
+                                            <option value="Tech">Tech</option>
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 mb-2">Statut</label>
+                                        <select 
+                                            value={formData.status}
+                                            onChange={(e) => setFormData({...formData, status: e.target.value})}
+                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                        >
+                                            <option value="Brouillon">Brouillon</option>
+                                            <option value="Publié">Publié</option>
+                                            <option value="Archivé">Archivé</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Auteur</label>
+                                    <input 
+                                        type="text"
+                                        value={formData.author}
+                                        onChange={(e) => setFormData({...formData, author: e.target.value})}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">URL Image</label>
+                                    <input 
+                                        type="url"
+                                        value={formData.image}
+                                        onChange={(e) => setFormData({...formData, image: e.target.value})}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                        placeholder="https://exemple.com/image.jpg"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                    <textarea 
+                                        value={formData.description}
+                                        onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                        rows="4"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end space-x-4 mt-6">
+                                <button 
+                                    type="button"
+                                    onClick={onClose}
+                                    className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                                >
+                                    Annuler
+                                </button>
+                                <button 
+                                    type="submit"
+                                    className="btn-pink text-white px-6 py-2 rounded-lg hover:shadow-lg transition-all duration-200"
+                                >
+                                    {article ? 'Mettre à jour' : 'Créer'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        // Autres pages
+        const CommandesPage = () => {
+            const commandes = [
+                { id: 1, client: "Marie Dupont", total: "125.50€", status: "En cours", date: "2024-01-15" },
+                { id: 2, client: "Jean Martin", total: "89.99€", status: "Livrée", date: "2024-01-14" },
+                { id: 3, client: "Sophie Bernard", total: "245.00€", status: "Préparation", date: "2024-01-13" }
+            ];
+
+            return (
+                <div className="p-6">
+                    <h2 className="text-3xl font-bold text-gray-800 mb-6">Gestion des Commandes</h2>
+                    <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+                        <table className="w-full">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {commandes.map(commande => (
+                                    <tr key={commande.id} className="hover:bg-gray-50">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">#{commande.id}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{commande.client}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{commande.total}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                                {commande.status}
+                                            </span>
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{commande.date}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        };
+
+        const StatistiquesPage = () => {
+            const chartRef = useRef(null);
+
+            useEffect(() => {
+                const ctx = document.getElementById('statisticsChart');
+                if (ctx) {
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'],
+                            datasets: [{
+                                label: 'Ventes',
+                                data: [12, 19, 3, 5, 2, 3],
+                                borderColor: '#ec4899',
+                                backgroundColor: 'rgba(236, 72, 153, 0.1)',
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false
+                        }
+                    });
+                }
+            }, []);
+
+            return (
+                <div className="p-6">
+                    <h2 className="text-3xl font-bold text-gray-800 mb-6">Statistiques</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                        <div className="bg-white p-6 rounded-lg shadow-sm">
+                            <div className="flex items-center">
+                                <div className="p-2 bg-pink-100 rounded-lg">
+                                    <i className="fas fa-shopping-cart text-pink-600"></i>
+                                </div>
+                                <div className="ml-4">
+                                    <p className="text-sm font-medium text-gray-600">Ventes</p>
+                                    <p className="text-2xl font-bold text-gray-900">1,234</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-lg shadow-sm">
+                            <div className="flex items-center">
+                                <div className="p-2 bg-blue-100 rounded-lg">
+                                    <i className="fas fa-users text-blue-600"></i>
+                                </div>
+                                <div className="ml-4">
+                                    <p className="text-sm font-medium text-gray-600">Clients</p>
+                                    <p className="text-2xl font-bold text-gray-900">567</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-lg shadow-sm">
+                            <div className="flex items-center">
+                                <div className="p-2 bg-green-100 rounded-lg">
+                                    <i className="fas fa-euro-sign text-green-600"></i>
+                                </div>
+                                <div className="ml-4">
+                                    <p className="text-sm font-medium text-gray-600">Revenus</p>
+                                    <p className="text-2xl font-bold text-gray-900">€45K</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="bg-white p-6 rounded-lg shadow-sm">
+                            <div className="flex items-center">
+                                <div className="p-2 bg-yellow-100 rounded-lg">
+                                    <i className="fas fa-newspaper text-yellow-600"></i>
+                                </div>
+                                <div className="ml-4">
+                                    <p className="text-sm font-medium text-gray-600">Articles</p>
+                                    <p className="text-2xl font-bold text-gray-900">89</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 className="text-lg font-bold text-gray-800 mb-4">Évolution des ventes</h3>
+                        <div className="chart-container">
+                            <canvas id="statisticsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ClientsPage = () => {
+            return (
+                <div className="p-6">
+                    <h2 className="text-3xl font-bold text-gray-800 mb-6">Gestion des Clients</h2>
+                    <div className="bg-white rounded-lg shadow-sm p-6">
+                        <p className="text-gray-600">Interface de gestion des clients en cours de développement...</p>
+                    </div>
+                </div>
+            );
+        };
+
+        const MessagesPage = () => {
+            return (
+                <div className="p-6">
+                    <h2 className="text-3xl font-bold text-gray-800 mb-6">Messages</h2>
+                    <div className="bg-white rounded-lg shadow-sm p-6">
+                        <p className="text-gray-600">Système de messagerie en cours de développement...</p>
+                    </div>
+                </div>
+            );
+        };
+
+        // Render l'application
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>

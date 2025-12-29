@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-commerce Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ffeef8 0%, #f8e6ff 100%);
+            overflow-x: hidden;
+        }
+
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Navbar Verticale */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #ff69b4 0%, #da70d6 50%, #dda0dd 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 4px 0 15px rgba(255, 105, 180, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        .logo i {
+            margin-right: 10px;
+            color: #ffb6c1;
+        }
+
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            padding: 15px 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-left-color: #ffb6c1;
+            transform: translateX(5px);
+        }
+
+        .nav-item i {
+            margin-right: 15px;
+            width: 20px;
+            font-size: 18px;
+        }
+
+        .nav-text {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .sidebar.collapsed .nav-text {
+            display: none;
+        }
+
+        .sidebar.collapsed .nav-item {
+            padding: 15px;
+            justify-content: center;
+        }
+
+        /* Zone de contenu principale */
+        .main-content {
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            transition: all 0.3s ease;
+            width: calc(100% - 280px);
+        }
+
+        .main-content.expanded {
+            margin-left: 70px;
+            width: calc(100% - 70px);
+        }
+
+        .header {
+            background: white;
+            padding: 25px 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(255, 105, 180, 0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #ff69b4;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #ff69b4, #da70d6);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 105, 180, 0.3);
+        }
+
+        .btn-secondary {
+            background: #ffb6c1;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ff6b9d;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffa500;
+            color: white;
+        }
+
+        /* Search Bar */
+        .search-container {
+            margin-bottom: 25px;
+        }
+
+        .search-bar {
+            width: 100%;
+            max-width: 400px;
+            padding: 15px 20px;
+            border: 2px solid #ffb6c1;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-bar:focus {
+            border-color: #ff69b4;
+            box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.1);
+        }
+
+        /* Articles Grid */
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        .article-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(255, 105, 180, 0.1);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .article-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(255, 105, 180, 0.2);
+            border-color: #ffb6c1;
+        }
+
+        .article-image {
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(45deg, #ffb6c1, #dda0dd);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+        }
+
+        .article-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .article-price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff69b4;
+            margin-bottom: 10px;
+        }
+
+        .article-description {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .article-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .toggle-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: #ff69b4;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 105, 180, 0.3);
+            display: none;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                transform: translateX(-100%);
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 20px 15px;
+            }
+
+            .toggle-btn {
+                display: block;
+            }
+
+            .articles-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .header {
+                padding: 20px;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .search-bar {
+                max-width: 100%;
+            }
+        }
+
+        /* Tablet Responsive */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+            }
+
+            .main-content {
+                margin-left: 240px;
+                width: calc(100% - 240px);
+            }
+
+            .articles-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 20px;
+            }
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal h2 {
+            color: #ff69b4;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ffb6c1;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            border-color: #ff69b4;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const AdminDashboard = () => {
+            const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+            const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+            const [activeSection, setActiveSection] = useState('articles');
+            const [searchTerm, setSearchTerm] = useState('');
+            const [showModal, setShowModal] = useState(false);
+            const [modalType, setModalType] = useState('add');
+            const [selectedArticle, setSelectedArticle] = useState(null);
+
+            const [articles, setArticles] = useState([
+                {
+                    id: 1,
+                    title: "Robe d'été Fleurie",
+                    price: 79.99,
+                    description: "Belle robe d'été avec motifs floraux, parfaite pour les journées ensoleillées.",
+                    category: "Vêtements"
+                },
+                {
+                    id: 2,
+                    title: "Sac à Main Rose",
+                    price: 149.99,
+                    description: "Sac à main élégant en cuir rose avec fermeture dorée.",
+                    category: "Accessoires"
+                },
+                {
+                    id: 3,
+                    title: "Chaussures à Talons",
+                    price: 89.99,
+                    description: "Chaussures à talons confortables pour toutes occasions.",
+                    category: "Chaussures"
+                },
+                {
+                    id: 4,
+                    title: "Bijoux Fantaisie",
+                    price: 29.99,
+                    description: "Ensemble de bijoux fantaisie avec cristaux roses.",
+                    category: "Bijoux"
+                },
+                {
+                    id: 5,
+                    title: "Parfum Floral",
+                    price: 65.99,
+                    description: "Parfum aux notes florales fraîches et féminines.",
+                    category: "Beauté"
+                },
+                {
+                    id: 6,
+                    title: "Top Dentelle",
+                    price: 45.99,
+                    description: "Top en dentelle délicate, idéal pour les soirées.",
+                    category: "Vêtements"
+                }
+            ]);
+
+            const [formData, setFormData] = useState({
+                title: '',
+                price: '',
+                description: '',
+                category: ''
+            });
+
+            const navItems = [
+                { id: 'articles', label: 'Articles', icon: 'fas fa-box' },
+                { id: 'clients', label: 'Clients', icon: 'fas fa-users' },
+                { id: 'commandes', label: 'Commandes', icon: 'fas fa-shopping-cart' },
+                { id: 'statistiques', label: 'Statistiques', icon: 'fas fa-chart-bar' },
+                { id: 'messages', label: 'Messages', icon: 'fas fa-envelope' },
+                { id: 'logout', label: 'Déconnexion', icon: 'fas fa-sign-out-alt' }
+            ];
+
+            const filteredArticles = articles.filter(article =>
+                article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                article.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                article.category.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            const handleAddArticle = () => {
+                setModalType('add');
+                setFormData({ title: '', price: '', description: '', category: '' });
+                setShowModal(true);
+            };
+
+            const handleEditArticle = (article) => {
+                setModalType('edit');
+                setSelectedArticle(article);
+                setFormData({
+                    title: article.title,
+                    price: article.price.toString(),
+                    description: article.description,
+                    category: article.category
+                });
+                setShowModal(true);
+            };
+
+            const handleDeleteArticle = (id) => {
+                if (window.confirm('Êtes-vous sûr de vouloir supprimer cet article ?')) {
+                    setArticles(articles.filter(article => article.id !== id));
+                }
+            };
+
+            const handleSaveArticle = () => {
+                if (!formData.title || !formData.price || !formData.description || !formData.category) {
+                    alert('Veuillez remplir tous les champs');
+                    return;
+                }
+
+                if (modalType === 'add') {
+                    const newArticle = {
+                        id: Math.max(...articles.map(a => a.id)) + 1,
+                        title: formData.title,
+                        price: parseFloat(formData.price),
+                        description: formData.description,
+                        category: formData.category
+                    };
+                    setArticles([...articles, newArticle]);
+                } else {
+                    setArticles(articles.map(article =>
+                        article.id === selectedArticle.id
+                            ? {
+                                ...article,
+                                title: formData.title,
+                                price: parseFloat(formData.price),
+                                description: formData.description,
+                                category: formData.category
+                            }
+                            : article
+                    ));
+                }
+
+                setShowModal(false);
+                setFormData({ title: '', price: '', description: '', category: '' });
+            };
+
+            const handleNavClick = (sectionId) => {
+                if (sectionId === 'logout') {
+                    if (window.confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+                        alert('Déconnexion...');
+                    }
+                } else {
+                    setActiveSection(sectionId);
+                    setMobileMenuOpen(false);
+                }
+            };
+
+            return (
+                <div className="admin-container">
+                    <button 
+                        className="toggle-btn"
+                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    >
+                        <i className="fas fa-bars"></i>
+                    </button>
+
+                    <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+                        <div className="sidebar-header">
+                            <div className="logo">
+                                <i className="fas fa-crown"></i>
+                                {!sidebarCollapsed && <span>GirlyShop Admin</span>}
+                            </div>
+                        </div>
+                        <nav className="sidebar-nav">
+                            {navItems.map(item => (
+                                <div 
+                                    key={item.id}
+                                    className={`nav-item ${activeSection === item.id ? 'active' : ''}`}
+                                    onClick={() => handleNavClick(item.id)}
+                                >
+                                    <i className={item.icon}></i>
+                                    <span className="nav-text">{item.label}</span>
+                                </div>
+                            ))}
+                        </nav>
+                    </div>
+
+                    <div className={`main-content ${sidebarCollapsed ? 'expanded' : ''}`}>
+                        <div className="header">
+                            <h1>
+                                <i className="fas fa-box" style={{marginRight: '15px'}}></i>
+                                Gestion des Articles
+                            </h1>
+                            <div className="header-actions">
+                                <button 
+                                    className="btn btn-primary"
+                                    onClick={handleAddArticle}
+                                >
+                                    <i className="fas fa-plus"></i>
+                                    Ajouter un Article
+                                </button>
+                                <button 
+                                    className="btn btn-secondary"
+                                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                                    style={{display: window.innerWidth > 768 ? 'inline-flex' : 'none'}}
+                                >
+                                    <i className={`fas fa-${sidebarCollapsed ? 'expand' : 'compress'}-arrows-alt`}></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="search-container">
+                            <input 
+                                type="text"
+                                className="search-bar"
+                                placeholder="Rechercher des articles..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+
+                        <div className="articles-grid">
+                            {filteredArticles.map(article => (
+                                <div key={article.id} className="article-card">
+                                    <div className="article-image">
+                                        <i className="fas fa-image"></i>
+                                    </div>
+                                    <div className="article-title">{article.title}</div>
+                                    <div className="article-price">{article.price.toFixed(2)} €</div>
+                                    <div className="article-description">{article.description}</div>
+                                    <div style={{color: '#ff69b4', marginBottom: '15px', fontWeight: '600'}}>
+                                        <i className="fas fa-tag"></i> {article.category}
+                                    </div>
+                                    <div className="article-actions">
+                                        <button 
+                                            className="btn btn-warning"
+                                            onClick={() => handleEditArticle(article)}
+                                        >
+                                            <i className="fas fa-edit"></i>
+                                            Modifier
+                                        </button>
+                                        <button 
+                                            className="btn btn-danger"
+                                            onClick={() => handleDeleteArticle(article.id)}
+                                        >
+                                            <i className="fas fa-trash"></i>
+                                            Supprimer
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {filteredArticles.length === 0 && (
+                            <div style={{textAlign: 'center', padding: '50px', color: '#ff69b4'}}>
+                                <i className="fas fa-search" style={{fontSize: '48px', marginBottom: '20px'}}></i>
+                                <h3>Aucun article trouvé</h3>
+                                <p>Essayez de modifier votre recherche ou ajoutez un nouvel article.</p>
+                            </div>
+                        )}
+                    </div>
+
+                    {showModal && (
+                        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()}>
+                                <h2>
+                                    <i className={`fas fa-${modalType === 'add' ? 'plus' : 'edit'}`}></i>
+                                    {modalType === 'add' ? 'Ajouter un Article' : 'Modifier l\'Article'}
+                                </h2>
+                                
+                                <div className="form-group">
+                                    <label>Titre de l'article</label>
+                                    <input 
+                                        type="text"
+                                        value={formData.title}
+                                        onChange={(e) => setFormData({...formData, title: e.target.value})}
+                                        placeholder="Entrez le titre..."
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Prix (€)</label>
+                                    <input 
+                                        type="number"
+                                        step="0.01"
+                                        value={formData.price}
+                                        onChange={(e) => setFormData({...formData, price: e.target.value})}
+                                        placeholder="0.00"
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Catégorie</label>
+                                    <input 
+                                        type="text"
+                                        value={formData.category}
+                                        onChange={(e) => setFormData({...formData, category: e.target.value})}
+                                        placeholder="Ex: Vêtements, Accessoires..."
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Description</label>
+                                    <textarea 
+                                        rows="4"
+                                        value={formData.description}
+                                        onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                        placeholder="Décrivez l'article..."
+                                    ></textarea>
+                                </div>
+
+                                <div className="modal-actions">
+                                    <button 
+                                        className="btn btn-secondary"
+                                        onClick={() => setShowModal(false)}
+                                    >
+                                        <i className="fas fa-times"></i>
+                                        Annuler
+                                    </button>
+                                    <button 
+                                        className="btn btn-primary"
+                                        onClick={handleSaveArticle}
+                                    >
+                                        <i className="fas fa-save"></i>
+                                        {modalType === 'add' ? 'Ajouter' : 'Sauvegarder'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<AdminDashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>

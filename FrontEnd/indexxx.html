@@ -1,0 +1,2176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-commerce Admin Dashboard</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #ffeef8 0%, #f8e6ff 100%);
+            overflow-x: hidden;
+        }
+
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Navbar Verticale */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, #ff69b4 0%, #da70d6 50%, #dda0dd 100%);
+            color: white;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 4px 0 15px rgba(255, 105, 180, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            width: 70px;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        .logo i {
+            margin-right: 10px;
+            color: #ffb6c1;
+        }
+
+        .sidebar-nav {
+            padding: 20px 0;
+        }
+
+        .nav-item {
+            padding: 15px 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            display: flex;
+            align-items: center;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            border-left-color: #ffb6c1;
+            transform: translateX(5px);
+        }
+
+        .nav-item i {
+            margin-right: 15px;
+            width: 20px;
+            font-size: 18px;
+        }
+
+        .nav-text {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .sidebar.collapsed .nav-text {
+            display: none;
+        }
+
+        .sidebar.collapsed .nav-item {
+            padding: 15px;
+            justify-content: center;
+        }
+
+        /* Zone de contenu principale */
+        .main-content {
+            margin-left: 280px;
+            flex: 1;
+            padding: 30px;
+            transition: all 0.3s ease;
+            width: calc(100% - 280px);
+        }
+
+        .main-content.expanded {
+            margin-left: 70px;
+            width: calc(100% - 70px);
+        }
+
+        .header {
+            background: white;
+            padding: 25px 30px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(255, 105, 180, 0.1);
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            color: #ff69b4;
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #ff69b4, #da70d6);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 105, 180, 0.3);
+        }
+
+        .btn-secondary {
+            background: #ffb6c1;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #ff6b9d;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffa500;
+            color: white;
+        }
+
+        .btn-info {
+            background: #20b2aa;
+            color: white;
+        }
+
+        .btn-success {
+            background: #32cd32;
+            color: white;
+        }
+
+        /* Search Bar */
+        .search-container {
+            margin-bottom: 25px;
+        }
+
+        .search-bar {
+            width: 100%;
+            max-width: 400px;
+            padding: 15px 20px;
+            border: 2px solid #ffb6c1;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .search-bar:focus {
+            border-color: #ff69b4;
+            box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.1);
+        }
+
+        /* Articles Grid */
+        .articles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        .article-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(255, 105, 180, 0.1);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .article-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(255, 105, 180, 0.2);
+            border-color: #ffb6c1;
+        }
+
+        .article-image {
+            width: 100%;
+            height: 180px;
+            background: linear-gradient(45deg, #ffb6c1, #dda0dd);
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 48px;
+        }
+
+        .article-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .article-price {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff69b4;
+            margin-bottom: 10px;
+        }
+
+        .article-description {
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .article-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Clients Grid */
+        .clients-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        .client-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(255, 105, 180, 0.1);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .client-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(255, 105, 180, 0.2);
+            border-color: #ffb6c1;
+        }
+
+        .client-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(45deg, #ffb6c1, #dda0dd);
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 32px;
+        }
+
+        .client-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .client-email {
+            color: #666;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .client-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px 0;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .client-info-item {
+            text-align: center;
+        }
+
+        .client-info-label {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 3px;
+        }
+
+        .client-info-value {
+            font-weight: 600;
+            color: #ff69b4;
+        }
+
+        .client-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        /* Orders Section */
+        .orders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 25px;
+            margin-top: 25px;
+        }
+
+        .order-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(255, 105, 180, 0.1);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            border-left: 5px solid #ff69b4;
+        }
+
+        .order-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(255, 105, 180, 0.2);
+            border-color: #ffb6c1;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .order-number {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .order-status {
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            color: white;
+        }
+
+        .order-status.en-attente {
+            background: #ffa500;
+        }
+
+        .order-status.expediee {
+            background: #20b2aa;
+        }
+
+        .order-status.livree {
+            background: #32cd32;
+        }
+
+        .order-status.annulee {
+            background: #ff6b9d;
+        }
+
+        .order-client {
+            color: #ff69b4;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .order-amount {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ff69b4;
+            margin-bottom: 10px;
+        }
+
+        .order-date {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .order-articles {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .order-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Messages Section */
+        .messages-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(255, 105, 180, 0.1);
+            overflow: hidden;
+        }
+
+        .messages-filters {
+            padding: 20px 30px;
+            background: #f9f9f9;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 20px;
+            border: 2px solid #ffb6c1;
+            background: white;
+            color: #ff69b4;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active,
+        .filter-btn:hover {
+            background: #ff69b4;
+            color: white;
+        }
+
+        .messages-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .message-item {
+            padding: 20px 30px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .message-item:hover {
+            background: #f9f9f9;
+        }
+
+        .message-item.unread {
+            background: #fff5f5;
+            border-left: 4px solid #ff69b4;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .message-sender {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .message-date {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .message-subject {
+            font-weight: 600;
+            color: #ff69b4;
+            margin-bottom: 8px;
+        }
+
+        .message-preview {
+            color: #666;
+            line-height: 1.5;
+        }
+
+        .message-priority {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            color: white;
+            margin-left: 10px;
+        }
+
+        .message-priority.high {
+            background: #ff6b9d;
+        }
+
+        .message-priority.medium {
+            background: #ffa500;
+        }
+
+        .message-priority.low {
+            background: #32cd32;
+        }
+
+        /* Statistics Section */
+        .stats-container {
+            margin-top: 25px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 25px rgba(255, 105, 180, 0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(255, 105, 180, 0.2);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, #ff69b4, #da70d6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            color: white;
+            font-size: 24px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .stat-trend {
+            margin-top: 10px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .stat-trend.up {
+            color: #32cd32;
+        }
+
+        .stat-trend.down {
+            color: #ff6b9d;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 8px 25px rgba(255, 105, 180, 0.1);
+            margin-bottom: 30px;
+        }
+
+        .chart-container h3 {
+            color: #ff69b4;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+        }
+
+        .toggle-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1001;
+            background: #ff69b4;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 105, 180, 0.3);
+            display: none;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                transform: translateX(-100%);
+            }
+
+            .sidebar.mobile-open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 20px 15px;
+            }
+
+            .toggle-btn {
+                display: block;
+            }
+
+            .articles-grid, .clients-grid, .orders-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .header {
+                padding: 20px;
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .search-bar {
+                max-width: 100%;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
+            }
+
+            .messages-filters {
+                padding: 15px 20px;
+            }
+
+            .message-item {
+                padding: 15px 20px;
+            }
+        }
+
+        /* Tablet Responsive */
+        @media (min-width: 769px) and (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+            }
+
+            .main-content {
+                margin-left: 240px;
+                width: calc(100% - 240px);
+            }
+
+            .articles-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 20px;
+            }
+
+            .clients-grid {
+                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+                gap: 20px;
+            }
+
+            .orders-grid {
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+                gap: 20px;
+            }
+        }
+
+        /* Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .modal {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal h2 {
+            color: #ff69b4;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ffb6c1;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            border-color: #ff69b4;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: flex-end;
+            margin-top: 25px;
+        }
+
+        /* Commandes Modal Styles */
+        .orders-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .order-item {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #ff69b4;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: #ff69b4;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const AdminDashboard = () => {
+            const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+            const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+            const [activeSection, setActiveSection] = useState('articles');
+            const [searchTerm, setSearchTerm] = useState('');
+            const [showModal, setShowModal] = useState(false);
+            const [modalType, setModalType] = useState('add');
+            const [selectedArticle, setSelectedArticle] = useState(null);
+            const [selectedClient, setSelectedClient] = useState(null);
+            const [selectedOrder, setSelectedOrder] = useState(null);
+            const [showOrdersModal, setShowOrdersModal] = useState(false);
+            const [showOrderModal, setShowOrderModal] = useState(false);
+            const [showMessageModal, setShowMessageModal] = useState(false);
+            const [selectedMessage, setSelectedMessage] = useState(null);
+            const [messageFilter, setMessageFilter] = useState('all');
+
+            const [articles, setArticles] = useState([
+                {
+                    id: 1,
+                    title: "Robe d'été Fleurie",
+                    price: 79.99,
+                    description: "Belle robe d'été avec motifs floraux, parfaite pour les journées ensoleillées.",
+                    category: "Vêtements"
+                },
+                {
+                    id: 2,
+                    title: "Sac à Main Rose",
+                    price: 149.99,
+                    description: "Sac à main élégant en cuir rose avec fermeture dorée.",
+                    category: "Accessoires"
+                },
+                {
+                    id: 3,
+                    title: "Chaussures à Talons",
+                    price: 89.99,
+                    description: "Chaussures à talons confortables pour toutes occasions.",
+                    category: "Chaussures"
+                },
+                {
+                    id: 4,
+                    title: "Bijoux Fantaisie",
+                    price: 29.99,
+                    description: "Ensemble de bijoux fantaisie avec cristaux roses.",
+                    category: "Bijoux"
+                },
+                {
+                    id: 5,
+                    title: "Parfum Floral",
+                    price: 65.99,
+                    description: "Parfum aux notes florales fraîches et féminines.",
+                    category: "Beauté"
+                },
+                {
+                    id: 6,
+                    title: "Top Dentelle",
+                    price: 45.99,
+                    description: "Top en dentelle délicate, idéal pour les soirées.",
+                    category: "Vêtements"
+                }
+            ]);
+
+            const [clients, setClients] = useState([
+                {
+                    id: 1,
+                    nom: "Sophie Martin",
+                    email: "sophie.martin@email.com",
+                    telephone: "+33 6 12 34 56 78",
+                    dateInscription: "2024-01-15",
+                    totalCommandes: 5,
+                    montantTotal: 456.78,
+                    ville: "Paris"
+                },
+                {
+                    id: 2,
+                    nom: "Emma Dubois",
+                    email: "emma.dubois@email.com",
+                    telephone: "+33 6 98 76 54 32",
+                    dateInscription: "2024-02-20",
+                    totalCommandes: 3,
+                    montantTotal: 287.45,
+                    ville: "Lyon"
+                },
+                {
+                    id: 3,
+                    nom: "Camille Bernard",
+                    email: "camille.bernard@email.com",
+                    telephone: "+33 6 45 67 89 01",
+                    dateInscription: "2024-01-10",
+                    totalCommandes: 8,
+                    montantTotal: 672.30,
+                    ville: "Marseille"
+                },
+                {
+                    id: 4,
+                    nom: "Léa Rousseau",
+                    email: "lea.rousseau@email.com",
+                    telephone: "+33 6 23 45 67 89",
+                    dateInscription: "2024-03-05",
+                    totalCommandes: 2,
+                    montantTotal: 159.98,
+                    ville: "Toulouse"
+                },
+                {
+                    id: 5,
+                    nom: "Chloé Moreau",
+                    email: "chloe.moreau@email.com",
+                    telephone: "+33 6 87 65 43 21",
+                    dateInscription: "2024-02-28",
+                    totalCommandes: 6,
+                    montantTotal: 523.45,
+                    ville: "Nice"
+                }
+            ]);
+
+            const [commandes, setCommandes] = useState([
+                {
+                    id: 1,
+                    clientId: 1,
+                    numero: "CMD-2024-001",
+                    date: "2024-03-15",
+                    montant: 129.99,
+                    statut: "livree",
+                    articles: ["Robe d'été Fleurie", "Sac à Main Rose"],
+                    adresse: "123 Rue de la Paix, Paris 75001"
+                },
+                {
+                    id: 2,
+                    clientId: 1,
+                    numero: "CMD-2024-015",
+                    date: "2024-03-10",
+                    montant: 89.99,
+                    statut: "expediee",
+                    articles: ["Chaussures à Talons"],
+                    adresse: "123 Rue de la Paix, Paris 75001"
+                },
+                {
+                    id: 3,
+                    clientId: 2,
+                    numero: "CMD-2024-008",
+                    date: "2024-03-12",
+                    montant: 95.98,
+                    statut: "en-attente",
+                    articles: ["Parfum Floral", "Bijoux Fantaisie"],
+                    adresse: "456 Avenue des Fleurs, Lyon 69000"
+                },
+                {
+                    id: 4,
+                    clientId: 3,
+                    numero: "CMD-2024-022",
+                    date: "2024-03-18",
+                    montant: 215.97,
+                    statut: "livree",
+                    articles: ["Robe d'été Fleurie", "Top Dentelle", "Sac à Main Rose"],
+                    adresse: "789 Boulevard du Commerce, Marseille 13000"
+                },
+                {
+                    id: 5,
+                    clientId: 1,
+                    numero: "CMD-2024-007",
+                    date: "2024-02-28",
+                    montant: 45.99,
+                    statut: "annulee",
+                    articles: ["Top Dentelle"],
+                    adresse: "123 Rue de la Paix, Paris 75001"
+                },
+                {
+                    id: 6,
+                    clientId: 4,
+                    numero: "CMD-2024-033",
+                    date: "2024-03-20",
+                    montant: 179.98,
+                    statut: "en-attente",
+                    articles: ["Sac à Main Rose", "Bijoux Fantaisie"],
+                    adresse: "321 Place du Capitole, Toulouse 31000"
+                },
+                {
+                    id: 7,
+                    clientId: 5,
+                    numero: "CMD-2024-041",
+                    date: "2024-03-22",
+                    montant: 125.98,
+                    statut: "expediee",
+                    articles: ["Chaussures à Talons", "Top Dentelle"],
+                    adresse: "654 Promenade des Anglais, Nice 06000"
+                }
+            ]);
+
+            const [messages, setMessages] = useState([
+                {
+                    id: 1,
+                    sender: "Sophie Martin",
+                    email: "sophie.martin@email.com",
+                    subject: "Problème avec ma commande",
+                    content: "Bonjour, j'ai reçu ma commande mais il manque un article. Pouvez-vous m'aider ?",
+                    date: "2024-03-20T10:30:00",
+                    priority: "high",
+                    read: false,
+                    type: "support"
+                },
+                {
+                    id: 2,
+                    sender: "Emma Dubois",
+                    email: "emma.dubois@email.com",
+                    subject: "Demande de remboursement",
+                    content: "Je souhaite retourner un article qui ne me convient pas. Quelle est la procédure ?",
+                    date: "2024-03-19T14:15:00",
+                    priority: "medium",
+                    read: true,
+                    type: "retour"
+                },
+                {
+                    id: 3,
+                    sender: "Camille Bernard",
+                    email: "camille.bernard@email.com",
+                    subject: "Question sur les tailles",
+                    content: "Bonjour, pourriez-vous me donner plus d'informations sur le guide des tailles pour les robes ?",
+                    date: "2024-03-18T16:45:00",
+                    priority: "low",
+                    read: true,
+                    type: "info"
+                },
+                {
+                    id: 4,
+                    sender: "Léa Rousseau",
+                    email: "lea.rousseau@email.com",
+                    subject: "Félicitations pour le service",
+                    content: "Je tenais à vous remercier pour l'excellente qualité de vos produits et votre service client.",
+                    date: "2024-03-17T09:20:00",
+                    priority: "low",
+                    read: false,
+                    type: "feedback"
+                },
+                {
+                    id: 5,
+                    sender: "Chloé Moreau",
+                    email: "chloe.moreau@email.com",
+                    subject: "Délai de livraison",
+                    content: "Ma commande est en cours depuis 5 jours. Pourriez-vous me donner une estimation de livraison ?",
+                    date: "2024-03-16T11:10:00",
+                    priority: "medium",
+                    read: true,
+                    type: "livraison"
+                },
+                {
+                    id: 6,
+                    sender: "Julie Petit",
+                    email: "julie.petit@email.com",
+                    subject: "Nouveau client - Questions",
+                    content: "Bonjour, je suis nouvelle sur votre site. Avez-vous un programme de fidélité ?",
+                    date: "2024-03-15T13:30:00",
+                    priority: "low",
+                    read: false,
+                    type: "info"
+                }
+            ]);
+
+            const [formData, setFormData] = useState({
+                title: '',
+                price: '',
+                description: '',
+                category: ''
+            });
+
+            const [orderFormData, setOrderFormData] = useState({
+                status: '',
+                address: '',
+                notes: ''
+            });
+
+            const navItems = [
+                { id: 'articles', label: 'Articles', icon: 'fas fa-box' },
+                { id: 'clients', label: 'Clients', icon: 'fas fa-users' },
+                { id: 'commandes', label: 'Commandes', icon: 'fas fa-shopping-cart' },
+                { id: 'statistiques', label: 'Statistiques', icon: 'fas fa-chart-bar' },
+                { id: 'messages', label: 'Messages', icon: 'fas fa-envelope' },
+                { id: 'logout', label: 'Déconnexion', icon: 'fas fa-sign-out-alt' }
+            ];
+
+            const filteredArticles = articles.filter(article =>
+                article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                article.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                article.category.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            const filteredClients = clients.filter(client =>
+                client.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                client.ville.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+
+            const filteredOrders = commandes.filter(order => {
+                const client = clients.find(c => c.id === order.clientId);
+                return (
+                    order.numero.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    (client && client.nom.toLowerCase().includes(searchTerm.toLowerCase())) ||
+                    order.statut.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+            });
+
+            const filteredMessages = messages.filter(message => {
+                const matchesSearch = message.sender.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                    message.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                                    message.content.toLowerCase().includes(searchTerm.toLowerCase());
+                
+                const matchesFilter = messageFilter === 'all' ||
+                                    (messageFilter === 'unread' && !message.read) ||
+                                    (messageFilter === 'read' && message.read) ||
+                                    message.type === messageFilter;
+                
+                return matchesSearch && matchesFilter;
+            });
+
+            // Statistics calculations
+            const totalRevenue = commandes.filter(c => c.statut === 'livree').reduce((sum, c) => sum + c.montant, 0);
+            const totalOrders = commandes.length;
+            const totalClients = clients.length;
+            const pendingOrders = commandes.filter(c => c.statut === 'en-attente').length;
+            const unreadMessages = messages.filter(m => !m.read).length;
+
+            useEffect(() => {
+                if (activeSection === 'statistiques') {
+                    // Defer chart rendering to allow DOM to update
+                    setTimeout(() => {
+                        renderCharts();
+                    }, 100);
+                }
+            }, [activeSection, commandes, articles]);
+
+            const renderCharts = () => {
+                // Sales Chart
+                const salesCtx = document.getElementById('salesChart');
+                if (salesCtx) {
+                    new Chart(salesCtx, {
+                        type: 'line',
+                        data: {
+                            labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun'],
+                            datasets: [{
+                                label: 'Ventes (€)',
+                                data: [1200, 1900, 3000, 2500, 2200, 3000],
+                                borderColor: '#ff69b4',
+                                backgroundColor: 'rgba(255, 105, 180, 0.1)',
+                                tension: 0.4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: true
+                                }
+                            }
+                        }
+                    });
+                }
+
+                // Orders by Status Chart
+                const statusCtx = document.getElementById('statusChart');
+                if (statusCtx) {
+                    new Chart(statusCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Livrée', 'Expédiée', 'En attente', 'Annulée'],
+                            datasets: [{
+                                data: [
+                                    commandes.filter(c => c.statut === 'livree').length,
+                                    commandes.filter(c => c.statut === 'expediee').length,
+                                    commandes.filter(c => c.statut === 'en-attente').length,
+                                    commandes.filter(c => c.statut === 'annulee').length
+                                ],
+                                backgroundColor: ['#32cd32', '#20b2aa', '#ffa500', '#ff6b9d']
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false
+                        }
+                    });
+                }
+
+                // Categories Chart
+                const categoriesCtx = document.getElementById('categoriesChart');
+                if (categoriesCtx) {
+                    const categoryData = {};
+                    articles.forEach(article => {
+                        categoryData[article.category] = (categoryData[article.category] || 0) + 1;
+                    });
+
+                    new Chart(categoriesCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: Object.keys(categoryData),
+                            datasets: [{
+                                label: 'Nombre d\'articles',
+                                data: Object.values(categoryData),
+                                backgroundColor: '#ff69b4'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            }
+                        }
+                    });
+                }
+            };
+
+            const handleAddArticle = () => {
+                setModalType('add');
+                setFormData({ title: '', price: '', description: '', category: '' });
+                setShowModal(true);
+            };
+
+            const handleEditArticle = (article) => {
+                setModalType('edit');
+                setSelectedArticle(article);
+                setFormData({
+                    title: article.title,
+                    price: article.price.toString(),
+                    description: article.description,
+                    category: article.category
+                });
+                setShowModal(true);
+            };
+
+            const handleDeleteArticle = (id) => {
+                if (window.confirm('Êtes-vous sûr de vouloir supprimer cet article ?')) {
+                    setArticles(articles.filter(article => article.id !== id));
+                }
+            };
+
+            const handleDeleteClient = (id) => {
+                if (window.confirm('Êtes-vous sûr de vouloir supprimer ce client ? Toutes ses commandes seront également supprimées.')) {
+                    setClients(clients.filter(client => client.id !== id));
+                    setCommandes(commandes.filter(commande => commande.clientId !== id));
+                }
+            };
+
+            const handleViewOrders = (client) => {
+                setSelectedClient(client);
+                setShowOrdersModal(true);
+            };
+
+            const handleViewOrder = (order) => {
+                setSelectedOrder(order);
+                setOrderFormData({
+                    status: order.statut,
+                    address: order.adresse,
+                    notes: ''
+                });
+                setShowOrderModal(true);
+            };
+
+            const handleUpdateOrderStatus = (orderId, newStatus) => {
+                setCommandes(commandes.map(order =>
+                    order.id === orderId ? { ...order, statut: newStatus } : order
+                ));
+            };
+
+            const handleViewMessage = (message) => {
+                setSelectedMessage(message);
+                setShowMessageModal(true);
+                if (!message.read) {
+                    setMessages(messages.map(m =>
+                        m.id === message.id ? { ...m, read: true } : m
+                    ));
+                }
+            };
+
+            const handleDeleteMessage = (messageId) => {
+                if (window.confirm('Êtes-vous sûr de vouloir supprimer ce message ?')) {
+                    setMessages(messages.filter(m => m.id !== messageId));
+                    setShowMessageModal(false);
+                }
+            };
+
+            const getClientOrders = (clientId) => {
+                return commandes.filter(commande => commande.clientId === clientId);
+            };
+
+            const getClientName = (clientId) => {
+                const client = clients.find(c => c.id === clientId);
+                return client ? client.nom : 'Client inconnu';
+            };
+
+            const getStatusLabel = (status) => {
+                const labels = {
+                    'en-attente': 'En attente',
+                    'expediee': 'Expédiée',
+                    'livree': 'Livrée',
+                    'annulee': 'Annulée'
+                };
+                return labels[status] || status;
+            };
+
+            const getPriorityLabel = (priority) => {
+                const labels = {
+                    'high': 'Urgent',
+                    'medium': 'Normal',
+                    'low': 'Faible'
+                };
+                return labels[priority] || priority;
+            };
+
+            const getTypeLabel = (type) => {
+                const labels = {
+                    'support': 'Support',
+                    'retour': 'Retour',
+                    'info': 'Information',
+                    'feedback': 'Commentaire',
+                    'livraison': 'Livraison'
+                };
+                return labels[type] || type;
+            };
+
+            const formatDate = (dateString) => {
+                return new Date(dateString).toLocaleDateString('fr-FR', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            };
+
+            const handleSaveArticle = () => {
+                if (!formData.title || !formData.price || !formData.description || !formData.category) {
+                    alert('Veuillez remplir tous les champs');
+                    return;
+                }
+
+                if (modalType === 'add') {
+                    const newArticle = {
+                        id: Math.max(...articles.map(a => a.id)) + 1,
+                        title: formData.title,
+                        price: parseFloat(formData.price),
+                        description: formData.description,
+                        category: formData.category
+                    };
+                    setArticles([...articles, newArticle]);
+                } else {
+                    setArticles(articles.map(article =>
+                        article.id === selectedArticle.id
+                            ? {
+                                ...article,
+                                title: formData.title,
+                                price: parseFloat(formData.price),
+                                description: formData.description,
+                                category: formData.category
+                            }
+                            : article
+                    ));
+                }
+
+                setShowModal(false);
+                setFormData({ title: '', price: '', description: '', category: '' });
+            };
+
+            const handleSaveOrder = () => {
+                if (selectedOrder) {
+                    setCommandes(commandes.map(order =>
+                        order.id === selectedOrder.id
+                            ? {
+                                ...order,
+                                statut: orderFormData.status,
+                                adresse: orderFormData.address
+                            }
+                            : order
+                    ));
+                    setShowOrderModal(false);
+                }
+            };
+
+            const handleNavClick = (sectionId) => {
+                if (sectionId === 'logout') {
+                    if (window.confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+                        alert('Déconnexion...');
+                    }
+                } else {
+                    setActiveSection(sectionId);
+                    setMobileMenuOpen(false);
+                    setSearchTerm('');
+                }
+            };
+
+            const renderHeader = () => {
+                const sectionTitles = {
+                    articles: 'Gestion des Articles',
+                    clients: 'Gestion des Clients',
+                    commandes: 'Gestion des Commandes',
+                    statistiques: 'Statistiques de Vente',
+                    messages: 'Centre de Messages'
+                };
+
+                const sectionIcons = {
+                    articles: 'fas fa-box',
+                    clients: 'fas fa-users',
+                    commandes: 'fas fa-shopping-cart',
+                    statistiques: 'fas fa-chart-bar',
+                    messages: 'fas fa-envelope'
+                };
+
+                return (
+                    <div className="header">
+                        <h1>
+                            <i className={sectionIcons[activeSection]} style={{marginRight: '15px'}}></i>
+                            {sectionTitles[activeSection]}
+                            {activeSection === 'messages' && unreadMessages > 0 && (
+                                <span style={{
+                                    background: '#ff6b9d',
+                                    color: 'white',
+                                    borderRadius: '50%',
+                                    padding: '5px 10px',
+                                    fontSize: '14px',
+                                    marginLeft: '10px'
+                                }}>
+                                    {unreadMessages}
+                                </span>
+                            )}
+                        </h1>
+                        <div className="header-actions">
+                            {activeSection === 'articles' && (
+                                <button 
+                                    className="btn btn-primary"
+                                    onClick={handleAddArticle}
+                                >
+                                    <i className="fas fa-plus"></i>
+                                    Ajouter un Article
+                                </button>
+                            )}
+                            <button 
+                                className="btn btn-secondary"
+                                onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                                style={{display: window.innerWidth > 768 ? 'inline-flex' : 'none'}}
+                            >
+                                <i className={`fas fa-${sidebarCollapsed ? 'expand' : 'compress'}-arrows-alt`}></i>
+                            </button>
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderArticlesSection = () => (
+                <>
+                    <div className="search-container">
+                        <input 
+                            type="text"
+                            className="search-bar"
+                            placeholder="Rechercher des articles..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="articles-grid">
+                        {filteredArticles.map(article => (
+                            <div key={article.id} className="article-card">
+                                <div className="article-image">
+                                    <i className="fas fa-image"></i>
+                                </div>
+                                <div className="article-title">{article.title}</div>
+                                <div className="article-price">{article.price.toFixed(2)} €</div>
+                                <div className="article-description">{article.description}</div>
+                                <div style={{color: '#ff69b4', marginBottom: '15px', fontWeight: '600'}}>
+                                    <i className="fas fa-tag"></i> {article.category}
+                                </div>
+                                <div className="article-actions">
+                                    <button 
+                                        className="btn btn-warning"
+                                        onClick={() => handleEditArticle(article)}
+                                    >
+                                        <i className="fas fa-edit"></i>
+                                        Modifier
+                                    </button>
+                                    <button 
+                                        className="btn btn-danger"
+                                        onClick={() => handleDeleteArticle(article.id)}
+                                    >
+                                        <i className="fas fa-trash"></i>
+                                        Supprimer
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {filteredArticles.length === 0 && (
+                        <div className="empty-state">
+                            <i className="fas fa-search"></i>
+                            <h3>Aucun article trouvé</h3>
+                            <p>Essayez de modifier votre recherche ou ajoutez un nouvel article.</p>
+                        </div>
+                    )}
+                </>
+            );
+
+            const renderClientsSection = () => (
+                <>
+                    <div className="search-container">
+                        <input 
+                            type="text"
+                            className="search-bar"
+                            placeholder="Rechercher des clients..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="clients-grid">
+                        {filteredClients.map(client => (
+                            <div key={client.id} className="client-card">
+                                <div className="client-avatar">
+                                    <i className="fas fa-user"></i>
+                                </div>
+                                <div className="client-name">{client.nom}</div>
+                                <div className="client-email">{client.email}</div>
+                                
+                                <div className="client-info">
+                                    <div className="client-info-item">
+                                        <div className="client-info-label">Commandes</div>
+                                        <div className="client-info-value">{client.totalCommandes}</div>
+                                    </div>
+                                    <div className="client-info-item">
+                                        <div className="client-info-label">Total dépensé</div>
+                                        <div className="client-info-value">{client.montantTotal.toFixed(2)} €</div>
+                                    </div>
+                                    <div className="client-info-item">
+                                        <div className="client-info-label">Ville</div>
+                                        <div className="client-info-value">{client.ville}</div>
+                                    </div>
+                                </div>
+
+                                <div style={{color: '#666', fontSize: '14px', textAlign: 'center', marginBottom: '15px'}}>
+                                    <i className="fas fa-calendar"></i> Inscrit le {new Date(client.dateInscription).toLocaleDateString('fr-FR')}
+                                </div>
+
+                                <div className="client-actions">
+                                    <button 
+                                        className="btn btn-info"
+                                        onClick={() => handleViewOrders(client)}
+                                    >
+                                        <i className="fas fa-eye"></i>
+                                        Voir commandes
+                                    </button>
+                                    <button 
+                                        className="btn btn-danger"
+                                        onClick={() => handleDeleteClient(client.id)}
+                                    >
+                                        <i className="fas fa-trash"></i>
+                                        Supprimer
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {filteredClients.length === 0 && (
+                        <div className="empty-state">
+                            <i className="fas fa-search"></i>
+                            <h3>Aucun client trouvé</h3>
+                            <p>Essayez de modifier votre recherche.</p>
+                        </div>
+                    )}
+                </>
+            );
+
+            const renderOrdersSection = () => (
+                <>
+                    <div className="search-container">
+                        <input 
+                            type="text"
+                            className="search-bar"
+                            placeholder="Rechercher des commandes..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="orders-grid">
+                        {filteredOrders.map(order => (
+                            <div key={order.id} className="order-card">
+                                <div className="order-header">
+                                    <div className="order-number">#{order.numero}</div>
+                                    <div className={`order-status ${order.statut}`}>
+                                        {getStatusLabel(order.statut)}
+                                    </div>
+                                </div>
+                                
+                                <div className="order-client">
+                                    <i className="fas fa-user"></i> {getClientName(order.clientId)}
+                                </div>
+                                
+                                <div className="order-amount">{order.montant.toFixed(2)} €</div>
+                                
+                                <div className="order-date">
+                                    <i className="fas fa-calendar"></i> {new Date(order.date).toLocaleDateString('fr-FR')}
+                                </div>
+
+                                <div className="order-articles">
+                                    <strong>Articles commandés :</strong><br />
+                                    {order.articles.join(', ')}
+                                </div>
+
+                                <div className="order-actions">
+                                    <button 
+                                        className="btn btn-info"
+                                        onClick={() => handleViewOrder(order)}
+                                    >
+                                        <i className="fas fa-eye"></i>
+                                        Détails
+                                    </button>
+                                    <button 
+                                        className="btn btn-success"
+                                        onClick={() => handleUpdateOrderStatus(order.id, 'expediee')}
+                                        disabled={order.statut === 'livree' || order.statut === 'annulee'}
+                                    >
+                                        <i className="fas fa-truck"></i>
+                                        Expédier
+                                    </button>
+                                    <button 
+                                        className="btn btn-primary"
+                                        onClick={() => handleUpdateOrderStatus(order.id, 'livree')}
+                                        disabled={order.statut === 'livree' || order.statut === 'annulee'}
+                                    >
+                                        <i className="fas fa-check"></i>
+                                        Livrer
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {filteredOrders.length === 0 && (
+                        <div className="empty-state">
+                            <i className="fas fa-search"></i>
+                            <h3>Aucune commande trouvée</h3>
+                            <p>Essayez de modifier votre recherche.</p>
+                        </div>
+                    )}
+                </>
+            );
+
+            const renderMessagesSection = () => (
+                <>
+                    <div className="search-container">
+                        <input 
+                            type="text"
+                            className="search-bar"
+                            placeholder="Rechercher dans les messages..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="messages-container">
+                        <div className="messages-filters">
+                            <button 
+                                className={`filter-btn ${messageFilter === 'all' ? 'active' : ''}`}
+                                onClick={() => setMessageFilter('all')}
+                            >
+                                Tous ({messages.length})
+                            </button>
+                            <button 
+                                className={`filter-btn ${messageFilter === 'unread' ? 'active' : ''}`}
+                                onClick={() => setMessageFilter('unread')}
+                            >
+                                Non lus ({messages.filter(m => !m.read).length})
+                            </button>
+                            <button 
+                                className={`filter-btn ${messageFilter === 'support' ? 'active' : ''}`}
+                                onClick={() => setMessageFilter('support')}
+                            >
+                                Support ({messages.filter(m => m.type === 'support').length})
+                            </button>
+                            <button 
+                                className={`filter-btn ${messageFilter === 'retour' ? 'active' : ''}`}
+                                onClick={() => setMessageFilter('retour')}
+                            >
+                                Retours ({messages.filter(m => m.type === 'retour').length})
+                            </button>
+                            <button 
+                                className={`filter-btn ${messageFilter === 'livraison' ? 'active' : ''}`}
+                                onClick={() => setMessageFilter('livraison')}
+                            >
+                                Livraison ({messages.filter(m => m.type === 'livraison').length})
+                            </button>
+                        </div>
+
+                        <div className="messages-list">
+                            {filteredMessages.map(message => (
+                                <div 
+                                    key={message.id} 
+                                    className={`message-item ${!message.read ? 'unread' : ''}`}
+                                    onClick={() => handleViewMessage(message)}
+                                >
+                                    <div className="message-header">
+                                        <div className="message-sender">
+                                            {message.sender}
+                                            <span className={`message-priority ${message.priority}`}>
+                                                {getPriorityLabel(message.priority)}
+                                            </span>
+                                        </div>
+                                        <div className="message-date">{formatDate(message.date)}</div>
+                                    </div>
+                                    <div className="message-subject">
+                                        <i className={`fas fa-${!message.read ? 'envelope' : 'envelope-open'}`}></i>
+                                        {message.subject}
+                                        <span style={{
+                                            background: '#ff69b4',
+                                            color: 'white',
+                                            padding: '2px 8px',
+                                            borderRadius: '10px',
+                                            fontSize: '10px',
+                                            marginLeft: '10px'
+                                        }}>
+                                            {getTypeLabel(message.type)}
+                                        </span>
+                                    </div>
+                                    <div className="message-preview">
+                                        {message.content.substring(0, 120)}...
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {filteredMessages.length === 0 && (
+                            <div className="empty-state">
+                                <i className="fas fa-inbox"></i>
+                                <h3>Aucun message trouvé</h3>
+                                <p>Aucun message ne correspond à vos critères de recherche.</p>
+                            </div>
+                        )}
+                    </div>
+                </>
+            );
+
+            const renderStatisticsSection = () => (
+                <div className="stats-container">
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <div className="stat-icon">
+                                <i className="fas fa-euro-sign"></i>
+                            </div>
+                            <div className="stat-value">{totalRevenue.toFixed(0)} €</div>
+                            <div className="stat-label">Chiffre d'Affaires</div>
+                            <div className="stat-trend up">
+                                <i className="fas fa-arrow-up"></i> +12% ce mois
+                            </div>
+                        </div>
+
+                        <div className="stat-card">
+                            <div className="stat-icon">
+                                <i className="fas fa-shopping-cart"></i>
+                            </div>
+                            <div className="stat-value">{totalOrders}</div>
+                            <div className="stat-label">Commandes Total</div>
+                            <div className="stat-trend up">
+                                <i className="fas fa-arrow-up"></i> +8% ce mois
+                            </div>
+                        </div>
+
+                        <div className="stat-card">
+                            <div className="stat-icon">
+                                <i className="fas fa-users"></i>
+                            </div>
+                            <div className="stat-value">{totalClients}</div>
+                            <div className="stat-label">Clients Actifs</div>
+                            <div className="stat-trend up">
+                                <i className="fas fa-arrow-up"></i> +5% ce mois
+                            </div>
+                        </div>
+
+                        <div className="stat-card">
+                            <div className="stat-icon">
+                                <i className="fas fa-clock"></i>
+                            </div>
+                            <div className="stat-value">{pendingOrders}</div>
+                            <div className="stat-label">En Attente</div>
+                            <div className="stat-trend down">
+                                <i className="fas fa-arrow-down"></i> -3% ce mois
+                            </div>
+                        </div>
+
+                        <div className="stat-card">
+                            <div className="stat-icon">
+                                <i className="fas fa-envelope"></i>
+                            </div>
+                            <div className="stat-value">{unreadMessages}</div>
+                            <div className="stat-label">Messages Non Lus</div>
+                        </div>
+
+                        <div className="stat-card">
+                            <div className="stat-icon">
+                                <i className="fas fa-box"></i>
+                            </div>
+                            <div className="stat-value">{articles.length}</div>
+                            <div className="stat-label">Articles en Stock</div>
+                        </div>
+                    </div>
+
+                    <div className="chart-container">
+                        <h3>Évolution des Ventes</h3>
+                        <div className="chart-wrapper">
+                            <canvas id="salesChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '30px'}}>
+                        <div className="chart-container">
+                            <h3>Statut des Commandes</h3>
+                            <div className="chart-wrapper">
+                                <canvas id="statusChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div className="chart-container">
+                            <h3>Articles par Catégorie</h3>
+                            <div className="chart-wrapper">
+                                <canvas id="categoriesChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const renderContent = () => {
+                switch(activeSection) {
+                    case 'articles':
+                        return renderArticlesSection();
+                    case 'clients':
+                        return renderClientsSection();
+                    case 'commandes':
+                        return renderOrdersSection();
+                    case 'statistiques':
+                        return renderStatisticsSection();
+                    case 'messages':
+                        return renderMessagesSection();
+                    default:
+                        return renderArticlesSection();
+                }
+            };
+
+            return (
+                <div className="admin-container">
+                    <button 
+                        className="toggle-btn"
+                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    >
+                        <i className="fas fa-bars"></i>
+                    </button>
+
+                    <div className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+                        <div className="sidebar-header">
+                            <div className="logo">
+                                <i className="fas fa-crown"></i>
+                                {!sidebarCollapsed && <span>GirlyShop Admin</span>}
+                            </div>
+                        </div>
+                        <nav className="sidebar-nav">
+                            {navItems.map(item => (
+                                <div 
+                                    key={item.id}
+                                    className={`nav-item ${activeSection === item.id ? 'active' : ''}`}
+                                    onClick={() => handleNavClick(item.id)}
+                                >
+                                    <i className={item.icon}></i>
+                                    <span className="nav-text">
+                                        {item.label}
+                                        {item.id === 'messages' && unreadMessages > 0 && (
+                                            <span style={{
+                                                background: '#ff6b9d',
+                                                color: 'white',
+                                                borderRadius: '50%',
+                                                padding: '2px 6px',
+                                                fontSize: '12px',
+                                                marginLeft: '8px'
+                                            }}>
+                                                {unreadMessages}
+                                            </span>
+                                        )}
+                                    </span>
+                                </div>
+                            ))}
+                        </nav>
+                    </div>
+
+                    <div className={`main-content ${sidebarCollapsed ? 'expanded' : ''}`}>
+                        {renderHeader()}
+                        {renderContent()}
+                    </div>
+
+                    {/* Modal pour Articles */}
+                    {showModal && (
+                        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()}>
+                                <h2>
+                                    <i className={`fas fa-${modalType === 'add' ? 'plus' : 'edit'}`}></i>
+                                    {modalType === 'add' ? 'Ajouter un Article' : 'Modifier l\'Article'}
+                                </h2>
+                                
+                                <div className="form-group">
+                                    <label>Titre de l'article</label>
+                                    <input 
+                                        type="text"
+                                        value={formData.title}
+                                        onChange={(e) => setFormData({...formData, title: e.target.value})}
+                                        placeholder="Entrez le titre..."
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Prix (€)</label>
+                                    <input 
+                                        type="number"
+                                        step="0.01"
+                                        value={formData.price}
+                                        onChange={(e) => setFormData({...formData, price: e.target.value})}
+                                        placeholder="0.00"
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Catégorie</label>
+                                    <input 
+                                        type="text"
+                                        value={formData.category}
+                                        onChange={(e) => setFormData({...formData, category: e.target.value})}
+                                        placeholder="Ex: Vêtements, Accessoires..."
+                                    />
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Description</label>
+                                    <textarea 
+                                        rows="4"
+                                        value={formData.description}
+                                        onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                        placeholder="Décrivez l'article..."
+                                    ></textarea>
+                                </div>
+
+                                <div className="modal-actions">
+                                    <button 
+                                        className="btn btn-secondary"
+                                        onClick={() => setShowModal(false)}
+                                    >
+                                        <i className="fas fa-times"></i>
+                                        Annuler
+                                    </button>
+                                    <button 
+                                        className="btn btn-primary"
+                                        onClick={handleSaveArticle}
+                                    >
+                                        <i className="fas fa-save"></i>
+                                        {modalType === 'add' ? 'Ajouter' : 'Sauvegarder'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Modal pour Commandes d'un client */}
+                    {showOrdersModal && selectedClient && (
+                        <div className="modal-overlay" onClick={() => setShowOrdersModal(false)}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()}>
+                                <h2>
+                                    <i className="fas fa-shopping-cart"></i>
+                                    Commandes de {selectedClient.nom}
+                                </h2>
+                                
+                                <div className="orders-list">
+                                    {getClientOrders(selectedClient.id).map(commande => (
+                                        <div key={commande.id} className="order-item">
+                                            <div className="order-header">
+                                                <div className="order-id">Commande #{commande.numero}</div>
+                                                <div className={`order-status ${commande.statut}`}>
+                                                    {getStatusLabel(commande.statut)}
+                                                </div>
+                                            </div>
+                                            <div style={{display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', fontSize: '14px', color: '#666'}}>
+                                                <div>
+                                                    <strong>Date:</strong> {new Date(commande.date).toLocaleDateString('fr-FR')}
+                                                </div>
+                                                <div>
+                                                    <strong>Montant:</strong> {commande.montant.toFixed(2)} €
+                                                </div>
+                                            </div>
+                                            <div style={{marginTop: '10px', fontSize: '14px'}}>
+                                                <strong>Articles:</strong> {commande.articles.join(', ')}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    
+                                    {getClientOrders(selectedClient.id).length === 0 && (
+                                        <div style={{textAlign: 'center', padding: '30px', color: '#666'}}>
+                                            <i className="fas fa-inbox" style={{fontSize: '32px', marginBottom: '15px'}}></i>
+                                            <p>Aucune commande pour ce client</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="modal-actions">
+                                    <button 
+                                        className="btn btn-secondary"
+                                        onClick={() => setShowOrdersModal(false)}
+                                    >
+                                        <i className="fas fa-times"></i>
+                                        Fermer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Modal pour Détails de commande */}
+                    {showOrderModal && selectedOrder && (
+                        <div className="modal-overlay" onClick={() => setShowOrderModal(false)}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()}>
+                                <h2>
+                                    <i className="fas fa-receipt"></i>
+                                    Détails de la Commande #{selectedOrder.numero}
+                                </h2>
+                                
+                                <div style={{marginBottom: '20px', padding: '15px', background: '#f9f9f9', borderRadius: '8px'}}>
+                                    <div><strong>Client:</strong> {getClientName(selectedOrder.clientId)}</div>
+                                    <div><strong>Date:</strong> {new Date(selectedOrder.date).toLocaleDateString('fr-FR')}</div>
+                                    <div><strong>Montant:</strong> {selectedOrder.montant.toFixed(2)} €</div>
+                                    <div><strong>Articles:</strong> {selectedOrder.articles.join(', ')}</div>
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Statut de la commande</label>
+                                    <select 
+                                        value={orderFormData.status}
+                                        onChange={(e) => setOrderFormData({...orderFormData, status: e.target.value})}
+                                    >
+                                        <option value="en-attente">En attente</option>
+                                        <option value="expediee">Expédiée</option>
+                                        <option value="livree">Livrée</option>
+                                        <option value="annulee">Annulée</option>
+                                    </select>
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Adresse de livraison</label>
+                                    <textarea 
+                                        rows="3"
+                                        value={orderFormData.address}
+                                        onChange={(e) => setOrderFormData({...orderFormData, address: e.target.value})}
+                                        placeholder="Adresse de livraison..."
+                                    ></textarea>
+                                </div>
+
+                                <div className="form-group">
+                                    <label>Notes internes</label>
+                                    <textarea 
+                                        rows="3"
+                                        value={orderFormData.notes}
+                                        onChange={(e) => setOrderFormData({...orderFormData, notes: e.target.value})}
+                                        placeholder="Ajouter des notes..."
+                                    ></textarea>
+                                </div>
+
+                                <div className="modal-actions">
+                                    <button 
+                                        className="btn btn-secondary"
+                                        onClick={() => setShowOrderModal(false)}
+                                    >
+                                        <i className="fas fa-times"></i>
+                                        Annuler
+                                    </button>
+                                    <button 
+                                        className="btn btn-primary"
+                                        onClick={handleSaveOrder}
+                                    >
+                                        <i className="fas fa-save"></i>
+                                        Sauvegarder
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Modal pour Messages */}
+                    {showMessageModal && selectedMessage && (
+                        <div className="modal-overlay" onClick={() => setShowMessageModal(false)}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()}>
+                                <h2>
+                                    <i className="fas fa-envelope-open"></i>
+                                    Message de {selectedMessage.sender}
+                                </h2>
+                                
+                                <div style={{marginBottom: '20px', padding: '15px', background: '#f9f9f9', borderRadius: '8px'}}>
+                                    <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '10px'}}>
+                                        <strong>{selectedMessage.subject}</strong>
+                                        <span className={`message-priority ${selectedMessage.priority}`}>
+                                            {getPriorityLabel(selectedMessage.priority)}
+                                        </span>
+                                    </div>
+                                    <div style={{fontSize: '14px', color: '#666', marginBottom: '10px'}}>
+                                        <i className="fas fa-user"></i> {selectedMessage.sender} 
+                                        <span style={{marginLeft: '20px'}}>
+                                            <i className="fas fa-envelope"></i> {selectedMessage.email}
+                                        </span>
+                                    </div>
+                                    <div style={{fontSize: '14px', color: '#666'}}>
+                                        <i className="fas fa-clock"></i> {formatDate(selectedMessage.date)}
+                                        <span style={{marginLeft: '20px', background: '#ff69b4', color: 'white', padding: '2px 8px', borderRadius: '10px'}}>
+                                            {getTypeLabel(selectedMessage.type)}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div style={{padding: '20px', background: 'white', border: '2px solid #f0f0f0', borderRadius: '8px', marginBottom: '20px'}}>
+                                    <p style={{lineHeight: '1.6', margin: '0'}}>{selectedMessage.content}</p>
+                                </div>
+
+                                <div className="modal-actions">
+                                    <button 
+                                        className="btn btn-danger"
+                                        onClick={() => handleDeleteMessage(selectedMessage.id)}
+                                    >
+                                        <i className="fas fa-trash"></i>
+                                        Supprimer
+                                    </button>
+                                    <button 
+                                        className="btn btn-primary"
+                                        onClick={() => window.location.href = `mailto:${selectedMessage.email}?subject=Re: ${selectedMessage.subject}`}
+                                    >
+                                        <i className="fas fa-reply"></i>
+                                        Répondre
+                                    </button>
+                                    <button 
+                                        className="btn btn-secondary"
+                                        onClick={() => setShowMessageModal(false)}
+                                    >
+                                        <i className="fas fa-times"></i>
+                                        Fermer
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        ReactDOM.render(<AdminDashboard />, document.getElementById('root'));
+    </script>
+</body>
+</html>

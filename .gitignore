@@ -1,0 +1,13 @@
+# Backend
+backend/target/
+backend/*.jar
+
+# Frontend
+frontend/node_modules/
+frontend/build/
+
+# Common
+.idea/
+*.iml
+*.log
+.env
